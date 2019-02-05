@@ -8,14 +8,15 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.SkuDetails
 import com.billingapp.MainActivity
 import com.billingapp.R
 import com.billingapp.logic.BillingRepo
-import com.billingapp.logic.INAPP_SKUS
+import my.android.inappbilling.INAPP_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.product_list_fragment.*
+import my.android.inappbilling.AugmentedSkuDetails
+import my.android.inappbilling.BillingRepo
+import my.android.inappbilling.BillingResponse
 
 class ProductListFragment : Fragment() {
 
@@ -35,7 +36,7 @@ class ProductListFragment : Fragment() {
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
         BillingRepo.getInstance(activity?.application!!)
-                .items(BillingClient.SkuType.INAPP, INAPP_SKUS)
+                .items(BillingRepo.PurchaseCategory.INAPP.value, INAPP_SKUS)
                 .startDataSourceConnections()
                 .onBillingOk(BillingRepo.BillingOK.QUERY_INAPP)
                 .onQueryResult { responseCode, skuDetailsList ->
@@ -44,7 +45,7 @@ class ProductListFragment : Fragment() {
         btnViewPurchases.setOnClickListener { navigateToViewPurchase() }
     }
 
-    private fun queryProductsResult(responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) {
+    private fun queryProductsResult(billingResponse: BillingResponse, skuDetailsList: MutableList<AugmentedSkuDetails>?) {
         Log.d(javaClass.name, skuDetailsList.toString())
         rvProductList?.adapter = ProductListAdapter(skuDetailsList
                 ?: mutableListOf()) { pos, data ->
@@ -53,11 +54,11 @@ class ProductListFragment : Fragment() {
         }
     }
 
-    private fun handleOnClick(pos: Int, data: SkuDetails) {
+    private fun handleOnClick(pos: Int, data: AugmentedSkuDetails) {
         BillingRepo.getInstance(activity?.application!!).from(activity!!)
                 .launchBillingFlow(data) { resCode, purchaseList ->
                     when (resCode) {
-                        BillingClient.BillingResponse.ITEM_ALREADY_OWNED -> Toast.makeText(requireContext(), "You have already purchased the item", Toast.LENGTH_SHORT).show()
+                        BillingResponse.OK -> Toast.makeText(requireContext(), "You have already purchased the item", Toast.LENGTH_SHORT).show()
                     }
                     Log.d(javaClass.name, purchaseList.toString())
                 }

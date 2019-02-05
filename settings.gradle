@@ -1,1 +1,1 @@
-include ':app', ':billingapp'
+include ':app', ':billingapp', ':play_billing'

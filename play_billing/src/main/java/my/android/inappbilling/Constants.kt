@@ -1,4 +1,4 @@
-package com.billingapp.logic
+package my.android.inappbilling
 
 val GAS = "gas"
 val PREMIUM_CAR = "premium_car"

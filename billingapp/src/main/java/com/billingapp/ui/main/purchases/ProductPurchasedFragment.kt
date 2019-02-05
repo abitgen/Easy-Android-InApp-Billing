@@ -12,10 +12,12 @@ import androidx.lifecycle.ViewModelProviders
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.Purchase
 import com.billingapp.R
-import com.billingapp.logic.BillingRepo
-import com.billingapp.logic.CONSUMABLE_SKUS
+import my.android.inappbilling.CONSUMABLE_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.purchase_list_fragment.*
+import my.android.inappbilling.AugmentedPurchase
+import my.android.inappbilling.BillingRepo
+import my.android.inappbilling.BillingResponse
 
 class ProductPurchasedFragment : Fragment() {
 
@@ -47,12 +49,12 @@ class ProductPurchasedFragment : Fragment() {
         btnBack.setOnClickListener { activity?.supportFragmentManager?.popBackStack() }
     }
 
-    private fun consumePurchase(purchase: Purchase){
+    private fun consumePurchase(purchase: AugmentedPurchase){
         BillingRepo.getInstance(activity?.application!!)
             .items(BillingRepo.PurchaseCategory.IS_CONSUMABLE.name, CONSUMABLE_SKUS)
             .consumePurchase(purchase){ responseCode, purchaseToken ->
                 when(responseCode){
-                    BillingClient.BillingResponse.OK ->{
+                    BillingResponse.OK ->{
                         Log.d(javaClass.name, "Product was consumed successfully")
                         Toast.makeText(requireContext(),"Product was consumed successfully,\n Now you can lock your paid content \n And notify server", LENGTH_SHORT).show()
                     }

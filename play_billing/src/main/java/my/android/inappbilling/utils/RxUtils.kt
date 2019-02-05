@@ -1,4 +1,4 @@
-package com.billingapp.utils
+package my.android.inappbilling.utils
 
 import android.annotation.SuppressLint
 import io.reactivex.Observable

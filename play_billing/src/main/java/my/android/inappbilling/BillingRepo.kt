@@ -1,4 +1,4 @@
-package com.billingapp.logic
+package my.android.inappbilling
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -8,9 +8,8 @@ import androidx.lifecycle.ViewModel
 import com.android.billingclient.api.*
 import com.android.billingclient.api.BillingClient.BillingResponse.BILLING_UNAVAILABLE
 import com.android.billingclient.api.BillingClient.BillingResponse.ERROR
-import com.billingapp.db.AugmentedSkuDetails
-import com.billingapp.utils.RxUtils
-import java.util.HashSet
+import my.android.inappbilling.utils.RxUtils
+import java.util.*
 
 class BillingRepo private constructor(private val application: Application) :
         PurchasesUpdatedListener, BillingClientStateListener,
@@ -40,9 +39,9 @@ class BillingRepo private constructor(private val application: Application) :
     private lateinit var billingOk: BillingOK
     private var billingError: (() -> Int)? = null
     private lateinit var purchases: (List<Purchase>) -> Unit
-    private lateinit var skuDetailsResponseListener: (responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) -> Unit
-    private lateinit var purchaseUpdateListener: (responseCode: Int, purchases: MutableList<Purchase>?) -> Unit
-    private lateinit var purchaseConsumedListener : (responseCode: Int, purchaseToken: String?) -> Unit
+    private lateinit var skuDetailsResponseListener: (responseCode: BillingResponse, skuDetailsList: MutableList<AugmentedSkuDetails>?) -> Unit
+    private lateinit var purchaseUpdateListener: (responseCode: BillingResponse, purchases: MutableList<AugmentedPurchase>?) -> Unit
+    private lateinit var purchaseConsumedListener : (responseCode: BillingResponse, purchaseToken: String?) -> Unit
 
     fun from(activity: Activity): BillingRepo {
         this.activity = activity
@@ -88,7 +87,7 @@ class BillingRepo private constructor(private val application: Application) :
         }
     }
 
-    override fun onQueryResult(result: (responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) -> Unit) {
+    override fun onQueryResult(result: (responseCode: BillingResponse, skuDetailsList: MutableList<AugmentedSkuDetails>?) -> Unit) {
         skuDetailsResponseListener = result
     }
 
@@ -97,7 +96,7 @@ class BillingRepo private constructor(private val application: Application) :
         return this
     }
 
-    override fun onPurchaseUpdated(result: (responseCode: Int, purchaseList: MutableList<Purchase>?) -> Unit): BillingPurchaseProvider {
+    override fun onPurchaseUpdated(result: (responseCode: BillingResponse, purchaseList: MutableList<AugmentedPurchase>?) -> Unit): BillingPurchaseProvider {
         purchaseUpdateListener = result
         return this
     }
@@ -166,7 +165,7 @@ class BillingRepo private constructor(private val application: Application) :
      * [queryPurchasesSync].
      */
     override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {
-        purchaseUpdateListener(responseCode, purchases)
+        purchaseUpdateListener(mapToEnum(responseCode), purchases?.map { AugmentedPurchase(it) }?.toMutableList())
     }
 
     override fun onBillingServiceDisconnected() {
@@ -253,19 +252,16 @@ class BillingRepo private constructor(private val application: Application) :
      * launch the Play Billing flow. The response to this call is returned from
      * [onPurchasesUpdated]
      */
-    fun launchBillingFlow(augmentedSkuDetails: AugmentedSkuDetails) =
-            launchBillingFlow(SkuDetails(augmentedSkuDetails.originalJson))
-
-    override fun launchBillingFlow(skuDetails: SkuDetails): BillingPurchaseProvider {
+    override fun launchBillingFlow(augmentedSkuDetails: AugmentedSkuDetails): BillingPurchaseProvider {
         //val oldSku: String? = getOldSku(skuDetails.sku)
-        val purchaseParams = BillingFlowParams.newBuilder().setSkuDetails(skuDetails)./*setOldSku(oldSku).*/build()
+        val purchaseParams = BillingFlowParams.newBuilder().setSkuDetails(augmentedSkuDetails.skuDetails)./*setOldSku(oldSku).*/build()
         playStoreBillingClient.launchBillingFlow(activity, purchaseParams)
         return this
     }
 
-    override fun launchBillingFlow(skuDetails: SkuDetails, result: (responseCode: Int, purchaseList: MutableList<Purchase>?) -> Unit): BillingPurchaseProvider {
+    override fun launchBillingFlow(augmentedSkuDetails: AugmentedSkuDetails, result: (responseCode: BillingResponse, purchaseList: MutableList<AugmentedPurchase>?) -> Unit): BillingPurchaseProvider {
         purchaseUpdateListener = result
-        val purchaseParams = BillingFlowParams.newBuilder().setSkuDetails(skuDetails)./*setOldSku(oldSku).*/build()
+        val purchaseParams = BillingFlowParams.newBuilder().setSkuDetails(augmentedSkuDetails.skuDetails)./*setOldSku(oldSku).*/build()
         playStoreBillingClient.launchBillingFlow(activity, purchaseParams)
         return this
     }
@@ -293,13 +289,13 @@ class BillingRepo private constructor(private val application: Application) :
      * buy it. In Trivial Drive for example consumeAsync is called each time the user buys gas;
      * otherwise they would never be able to buy gas or drive again once the tank becomes empty.
      */
-    override fun consumePurchase(purchase: Purchase, listener:(responseCode: Int, purchaseToken: String?) -> Unit):BillingPurchaseProvider {
+    override fun consumePurchase(augmentedPurchase: AugmentedPurchase, listener:(responseCode: BillingResponse, purchaseToken: String?) -> Unit): BillingPurchaseProvider {
         purchaseConsumedListener = listener
-        if (skuItemsMap.getOrElse(PurchaseCategory.IS_CONSUMABLE.name){ emptyList() }.contains(purchase.sku)) {
-            playStoreBillingClient.consumeAsync(purchase.purchaseToken, this)
+        if (skuItemsMap.getOrElse(PurchaseCategory.IS_CONSUMABLE.name){ emptyList() }.contains(augmentedPurchase.purchase.sku)) {
+            playStoreBillingClient.consumeAsync(augmentedPurchase.purchase.purchaseToken, this)
         }else{
             onBillingError(ERROR, "The product cannot be consumed")
-            purchaseConsumedListener(ERROR, null)
+            purchaseConsumedListener(BillingResponse.ERROR, null)
         }
         return this
     }
@@ -336,7 +332,7 @@ class BillingRepo private constructor(private val application: Application) :
      */
     override fun onConsumeResponse(responseCode: Int, purchaseToken: String?) {
         Log.d(javaClass.name, "on Purchase Consume Response")
-        purchaseConsumedListener(responseCode, purchaseToken)
+        purchaseConsumedListener(mapToEnum(responseCode), purchaseToken)
     }
 
     /**
@@ -345,7 +341,7 @@ class BillingRepo private constructor(private val application: Application) :
      */
     override fun onSkuDetailsResponse(responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) {
         Log.d(javaClass.name, "Sku Details Response")
-        skuDetailsResponseListener(responseCode, skuDetailsList)
+        skuDetailsResponseListener(mapToEnum(responseCode), skuDetailsList?.map { AugmentedSkuDetails(it) }?.toMutableList())
     }
 
     /**
@@ -387,6 +383,14 @@ class BillingRepo private constructor(private val application: Application) :
         return responseCode == BillingClient.BillingResponse.OK
     }
 
+    private fun mapToEnum(responseCode: Int):BillingResponse{
+        return when(responseCode){
+            BillingResponse.OK.value -> BillingResponse.OK
+            BillingResponse.USER_CANCELED.value -> BillingResponse.USER_CANCELED
+            else -> BillingResponse.ERROR
+        }
+    }
+
     companion object {
         @SuppressLint("StaticFieldLeak")
         @Volatile
@@ -405,7 +409,7 @@ class BillingRepo private constructor(private val application: Application) :
         CONSUME_INAPP_PURCHASE
     }
 
-    enum class PurchaseCategory(value:String){
+    enum class PurchaseCategory(val value:String){
         IS_CONSUMABLE("Is consumable"),
         ONE_TIME_PURCHASE("One Time Purchase - Non Consumable"),
         INAPP(BillingClient.SkuType.INAPP),
