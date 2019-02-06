@@ -38,7 +38,7 @@ class BillingRepo private constructor(private val application: Application) :
     private lateinit var billingClientConnectionListener: (billingConnectionState: Int) -> Unit
     private lateinit var billingOk: BillingOK
     private var billingError: (() -> Int)? = null
-    private lateinit var purchases: (List<Purchase>) -> Unit
+    private lateinit var purchases: (List<AugmentedPurchase>) -> Unit
     private lateinit var skuDetailsResponseListener: (responseCode: BillingResponse, skuDetailsList: MutableList<AugmentedSkuDetails>?) -> Unit
     private lateinit var purchaseUpdateListener: (responseCode: BillingResponse, purchases: MutableList<AugmentedPurchase>?) -> Unit
     private lateinit var purchaseConsumedListener : (responseCode: BillingResponse, purchaseToken: String?) -> Unit
@@ -91,7 +91,7 @@ class BillingRepo private constructor(private val application: Application) :
         skuDetailsResponseListener = result
     }
 
-    override fun onPurchasesQueryResult(purchaseList: (List<Purchase>) -> Unit): BillingPurchaseProvider {
+    override fun onPurchasesQueryResult(purchaseList: (List<AugmentedPurchase>) -> Unit): BillingPurchaseProvider {
         purchases = purchaseList
         return this
     }
@@ -165,7 +165,7 @@ class BillingRepo private constructor(private val application: Application) :
      * [queryPurchasesSync].
      */
     override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {
-        purchaseUpdateListener(mapToEnum(responseCode), purchases?.map { AugmentedPurchase(it) }?.toMutableList())
+        purchaseUpdateListener(getResponseCode(responseCode), purchases?.map { AugmentedPurchase(it) }?.toMutableList())
     }
 
     override fun onBillingServiceDisconnected() {
@@ -244,7 +244,7 @@ class BillingRepo private constructor(private val application: Application) :
             }
         }
         Log.d(javaClass.name, "All purchases " + purchasesResult.toString())
-        purchases(purchasesResult.toList())
+        purchases(purchasesResult.map { AugmentedPurchase(it) }.toList())
     }
 
     /**
@@ -332,7 +332,7 @@ class BillingRepo private constructor(private val application: Application) :
      */
     override fun onConsumeResponse(responseCode: Int, purchaseToken: String?) {
         Log.d(javaClass.name, "on Purchase Consume Response")
-        purchaseConsumedListener(mapToEnum(responseCode), purchaseToken)
+        purchaseConsumedListener(getResponseCode(responseCode), purchaseToken)
     }
 
     /**
@@ -341,7 +341,7 @@ class BillingRepo private constructor(private val application: Application) :
      */
     override fun onSkuDetailsResponse(responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) {
         Log.d(javaClass.name, "Sku Details Response")
-        skuDetailsResponseListener(mapToEnum(responseCode), skuDetailsList?.map { AugmentedSkuDetails(it) }?.toMutableList())
+        skuDetailsResponseListener(getResponseCode(responseCode), skuDetailsList?.map { AugmentedSkuDetails(it) }?.toMutableList())
     }
 
     /**
@@ -383,14 +383,6 @@ class BillingRepo private constructor(private val application: Application) :
         return responseCode == BillingClient.BillingResponse.OK
     }
 
-    private fun mapToEnum(responseCode: Int):BillingResponse{
-        return when(responseCode){
-            BillingResponse.OK.value -> BillingResponse.OK
-            BillingResponse.USER_CANCELED.value -> BillingResponse.USER_CANCELED
-            else -> BillingResponse.ERROR
-        }
-    }
-
     companion object {
         @SuppressLint("StaticFieldLeak")
         @Volatile
@@ -400,6 +392,16 @@ class BillingRepo private constructor(private val application: Application) :
                 INSTANCE ?: synchronized(this) {
                     INSTANCE ?: BillingRepo(application).also { INSTANCE = it }
                 }
+
+        fun getResponseCode(responseCode: Int):BillingResponse = BillingResponse.values().first { responseCode == it.value }
+
+        private fun mapToEnum(responseCode: Int):BillingResponse{
+            return when(responseCode){
+                BillingResponse.OK.value -> BillingResponse.OK
+                BillingResponse.USER_CANCELED.value -> BillingResponse.USER_CANCELED
+                else -> BillingResponse.ERROR
+            }
+        }
     }
 
     enum class BillingOK {

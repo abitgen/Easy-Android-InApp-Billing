@@ -17,8 +17,6 @@ package com.billingapp.db
 
 import androidx.lifecycle.LiveData
 import androidx.room.*
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.SkuDetails
 
 /**
  * The rest of the app needs a list of the [SkuDetails] so to show users what to buy
@@ -31,7 +29,7 @@ import com.android.billingclient.api.SkuDetails
 @Dao
 interface AugmentedSkuDetailsDao {
 
-    @Query("SELECT * FROM AugmentedSkuDetails WHERE type = '${BillingClient.SkuType.SUBS}'")
+    /*@Query("SELECT * FROM AugmentedSkuDetails WHERE type = '${BillingClient.SkuType.SUBS}'")
     fun getSubscriptionSkuDetails(): LiveData<List<AugmentedSkuDetails>>
 
     @Query("SELECT * FROM AugmentedSkuDetails WHERE type = '${BillingClient.SkuType.INAPP}'")
@@ -63,5 +61,5 @@ interface AugmentedSkuDetailsDao {
     fun insert(augmentedSkuDetails: AugmentedSkuDetails)
 
     @Query("UPDATE AugmentedSkuDetails SET canPurchase = :canPurchase WHERE sku = :sku")
-    fun update(sku: String, canPurchase: Boolean)
+    fun update(sku: String, canPurchase: Boolean)*/
 }

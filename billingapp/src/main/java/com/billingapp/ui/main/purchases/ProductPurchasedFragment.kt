@@ -9,9 +9,8 @@ import android.widget.Toast
 import android.widget.Toast.LENGTH_SHORT
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
-import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.Purchase
 import com.billingapp.R
+import com.billingapp.ui.main.AugmentedPurchases.ProductPurchasedAdapter
 import my.android.inappbilling.CONSUMABLE_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.purchase_list_fragment.*

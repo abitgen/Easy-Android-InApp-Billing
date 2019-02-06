@@ -10,13 +10,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import com.billingapp.MainActivity
 import com.billingapp.R
-import com.billingapp.logic.BillingRepo
-import my.android.inappbilling.INAPP_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.product_list_fragment.*
 import my.android.inappbilling.AugmentedSkuDetails
 import my.android.inappbilling.BillingRepo
 import my.android.inappbilling.BillingResponse
+import my.android.inappbilling.INAPP_SKUS
 
 class ProductListFragment : Fragment() {
 
@@ -58,7 +57,7 @@ class ProductListFragment : Fragment() {
         BillingRepo.getInstance(activity?.application!!).from(activity!!)
                 .launchBillingFlow(data) { resCode, purchaseList ->
                     when (resCode) {
-                        BillingResponse.OK -> Toast.makeText(requireContext(), "You have already purchased the item", Toast.LENGTH_SHORT).show()
+                        BillingResponse.ITEM_ALREADY_OWNED -> Toast.makeText(requireContext(), "You have already purchased the item", Toast.LENGTH_SHORT).show()
                     }
                     Log.d(javaClass.name, purchaseList.toString())
                 }

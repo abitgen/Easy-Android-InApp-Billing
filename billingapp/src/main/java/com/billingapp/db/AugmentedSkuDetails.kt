@@ -17,7 +17,6 @@ package com.billingapp.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.android.billingclient.api.SkuDetails
 
 
 /**

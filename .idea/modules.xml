@@ -7,6 +7,7 @@
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/billingapp/billingapp.iml" filepath="$PROJECT_DIR$/billingapp/billingapp.iml" />
       <module fileurl="file://$PROJECT_DIR$/play_billing/play_billing.iml" filepath="$PROJECT_DIR$/play_billing/play_billing.iml" />
+      <module fileurl="file://$PROJECT_DIR$/play_billing/play_billing.iml" filepath="$PROJECT_DIR$/play_billing/play_billing.iml" />
     </modules>
   </component>
 </project>
