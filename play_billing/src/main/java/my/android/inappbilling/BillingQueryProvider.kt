@@ -1,10 +1,9 @@
 package my.android.inappbilling
 
-import com.android.billingclient.api.Purchase
-import com.android.billingclient.api.SkuDetails
+import my.android.inappbilling.enums.BillingOK
 
 interface BillingQueryProvider {
-    fun onBillingOk(skuType: BillingRepo.BillingOK): BillingQueryProvider
+    fun onBillingOk(skuType: BillingOK): BillingQueryProvider
     fun onQueryResult(result: (responseCode: BillingResponse, skuDetailsList: MutableList<AugmentedSkuDetails>?) -> Unit)
     fun onPurchasesQueryResult(purchaseList: (List<AugmentedPurchase>) -> Unit): BillingPurchaseProvider
 }

@@ -10,12 +10,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import com.billingapp.MainActivity
 import com.billingapp.R
+import com.billingapp.model.INAPP_SKUS
+import com.billingapp.model.SUBS_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.product_list_fragment.*
-import my.android.inappbilling.AugmentedSkuDetails
-import my.android.inappbilling.BillingRepo
-import my.android.inappbilling.BillingResponse
-import my.android.inappbilling.INAPP_SKUS
+import my.android.inappbilling.*
+import my.android.inappbilling.enums.BillingOK
+import my.android.inappbilling.enums.ProductCategory
 
 class ProductListFragment : Fragment() {
 
@@ -34,10 +35,18 @@ class ProductListFragment : Fragment() {
         super.onActivityCreated(savedInstanceState)
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
 
-        BillingRepo.getInstance(activity?.application!!)
-                .items(BillingRepo.PurchaseCategory.INAPP.value, INAPP_SKUS)
+       /* BillingRepo.getInstance(activity?.application!!)
+                .items(BillingRepo.ProductCategory.INAPP.value, INAPP_SKUS)
                 .startDataSourceConnections()
                 .onBillingOk(BillingRepo.BillingOK.QUERY_INAPP)
+                .onQueryResult { responseCode, skuDetailsList ->
+                    queryProductsResult(responseCode, skuDetailsList)
+                }*/
+        BillingRepo.getInstance(activity?.application!!)
+                .items(ProductCategory.SUBS.value, SUBS_SKUS)
+                .items(ProductCategory.INAPP.value, INAPP_SKUS)
+                .startDataSourceConnections()
+                .onBillingOk(BillingOK.QUERY_BOTH)
                 .onQueryResult { responseCode, skuDetailsList ->
                     queryProductsResult(responseCode, skuDetailsList)
                 }

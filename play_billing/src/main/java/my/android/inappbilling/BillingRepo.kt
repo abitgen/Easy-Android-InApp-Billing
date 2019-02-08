@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import com.android.billingclient.api.*
 import com.android.billingclient.api.BillingClient.BillingResponse.BILLING_UNAVAILABLE
 import com.android.billingclient.api.BillingClient.BillingResponse.ERROR
+import my.android.inappbilling.enums.BillingOK
+import my.android.inappbilling.enums.ProductCategory
 import my.android.inappbilling.utils.RxUtils
 import java.util.*
 
@@ -41,7 +43,9 @@ class BillingRepo private constructor(private val application: Application) :
     private lateinit var purchases: (List<AugmentedPurchase>) -> Unit
     private lateinit var skuDetailsResponseListener: (responseCode: BillingResponse, skuDetailsList: MutableList<AugmentedSkuDetails>?) -> Unit
     private lateinit var purchaseUpdateListener: (responseCode: BillingResponse, purchases: MutableList<AugmentedPurchase>?) -> Unit
-    private lateinit var purchaseConsumedListener : (responseCode: BillingResponse, purchaseToken: String?) -> Unit
+    private lateinit var purchaseConsumedListener: (responseCode: BillingResponse, purchaseToken: String?) -> Unit
+    private var queryCount:Int = 0
+    private var skuDetailsGroupList:MutableList<AugmentedSkuDetails> = mutableListOf()
 
     fun from(activity: Activity): BillingRepo {
         this.activity = activity
@@ -70,11 +74,16 @@ class BillingRepo private constructor(private val application: Application) :
         when (billingOk) {
             BillingOK.QUERY_INAPP -> {
                 Log.d(javaClass.name, " Inapp query")
-                querySkuDetailsAsync(BillingClient.SkuType.INAPP)
+                querySkuDetailsAsync(ProductCategory.INAPP.value)
             }
             BillingOK.QUERY_SUBSCRIPTIONS -> {
                 Log.d(javaClass.name, " Subs query")
-                querySkuDetailsAsync(BillingClient.SkuType.SUBS)
+                querySkuDetailsAsync(ProductCategory.SUBS.value)
+            }
+            BillingOK.QUERY_BOTH -> {
+                Log.d(javaClass.name, " Inapp & Subs query")
+                querySkuDetailsAsync(ProductCategory.INAPP.value)
+                querySkuDetailsAsync(ProductCategory.SUBS.value)
             }
             BillingOK.QUERY_PURCHASES -> {
                 Log.d(javaClass.name, " purchases query")
@@ -289,11 +298,11 @@ class BillingRepo private constructor(private val application: Application) :
      * buy it. In Trivial Drive for example consumeAsync is called each time the user buys gas;
      * otherwise they would never be able to buy gas or drive again once the tank becomes empty.
      */
-    override fun consumePurchase(augmentedPurchase: AugmentedPurchase, listener:(responseCode: BillingResponse, purchaseToken: String?) -> Unit): BillingPurchaseProvider {
+    override fun consumePurchase(augmentedPurchase: AugmentedPurchase, listener: (responseCode: BillingResponse, purchaseToken: String?) -> Unit): BillingPurchaseProvider {
         purchaseConsumedListener = listener
-        if (skuItemsMap.getOrElse(PurchaseCategory.IS_CONSUMABLE.name){ emptyList() }.contains(augmentedPurchase.purchase.sku)) {
+        if (skuItemsMap.getOrElse(ProductCategory.IS_CONSUMABLE.name) { emptyList() }.contains(augmentedPurchase.purchase.sku)) {
             playStoreBillingClient.consumeAsync(augmentedPurchase.purchase.purchaseToken, this)
-        }else{
+        } else {
             onBillingError(ERROR, "The product cannot be consumed")
             purchaseConsumedListener(BillingResponse.ERROR, null)
         }
@@ -341,7 +350,19 @@ class BillingRepo private constructor(private val application: Application) :
      */
     override fun onSkuDetailsResponse(responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) {
         Log.d(javaClass.name, "Sku Details Response")
-        skuDetailsResponseListener(getResponseCode(responseCode), skuDetailsList?.map { AugmentedSkuDetails(it) }?.toMutableList())
+        when(billingOk){
+            BillingOK.QUERY_BOTH->{
+                queryCount++
+                skuDetailsGroupList.addAll(skuDetailsList?.map { AugmentedSkuDetails(it) }?.toList()?: mutableListOf())
+                if(queryCount==skuItemsMap.size){
+                    skuDetailsResponseListener(getResponseCode(responseCode), skuDetailsGroupList.toMutableList())
+                    resetskuDetailsGroupList()
+                }
+            }
+            else->{
+                skuDetailsResponseListener(getResponseCode(responseCode), skuDetailsList?.map { AugmentedSkuDetails(it) }?.toMutableList())
+            }
+        }
     }
 
     /**
@@ -383,6 +404,11 @@ class BillingRepo private constructor(private val application: Application) :
         return responseCode == BillingClient.BillingResponse.OK
     }
 
+    private fun resetskuDetailsGroupList(){
+        skuDetailsGroupList.clear()
+        queryCount=0
+    }
+
     companion object {
         @SuppressLint("StaticFieldLeak")
         @Volatile
@@ -393,28 +419,14 @@ class BillingRepo private constructor(private val application: Application) :
                     INSTANCE ?: BillingRepo(application).also { INSTANCE = it }
                 }
 
-        fun getResponseCode(responseCode: Int):BillingResponse = BillingResponse.values().first { responseCode == it.value }
+        fun getResponseCode(responseCode: Int): BillingResponse = BillingResponse.values().first { responseCode == it.value }
 
-        private fun mapToEnum(responseCode: Int):BillingResponse{
-            return when(responseCode){
+        private fun mapToEnum(responseCode: Int): BillingResponse {
+            return when (responseCode) {
                 BillingResponse.OK.value -> BillingResponse.OK
                 BillingResponse.USER_CANCELED.value -> BillingResponse.USER_CANCELED
                 else -> BillingResponse.ERROR
             }
         }
-    }
-
-    enum class BillingOK {
-        QUERY_INAPP,
-        QUERY_SUBSCRIPTIONS,
-        QUERY_PURCHASES,
-        CONSUME_INAPP_PURCHASE
-    }
-
-    enum class PurchaseCategory(val value:String){
-        IS_CONSUMABLE("Is consumable"),
-        ONE_TIME_PURCHASE("One Time Purchase - Non Consumable"),
-        INAPP(BillingClient.SkuType.INAPP),
-        SUBS(BillingClient.SkuType.SUBS)
     }
 }

@@ -11,12 +11,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import com.billingapp.R
 import com.billingapp.ui.main.AugmentedPurchases.ProductPurchasedAdapter
-import my.android.inappbilling.CONSUMABLE_SKUS
+import com.billingapp.model.CONSUMABLE_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.purchase_list_fragment.*
 import my.android.inappbilling.AugmentedPurchase
 import my.android.inappbilling.BillingRepo
 import my.android.inappbilling.BillingResponse
+import my.android.inappbilling.enums.BillingOK
+import my.android.inappbilling.enums.ProductCategory
 
 class ProductPurchasedFragment : Fragment() {
 
@@ -38,7 +40,7 @@ class ProductPurchasedFragment : Fragment() {
 
         BillingRepo.getInstance(activity?.application!!)
                 .startDataSourceConnections()
-                .onBillingOk(BillingRepo.BillingOK.QUERY_PURCHASES)
+                .onBillingOk(BillingOK.QUERY_PURCHASES)
                 .onPurchasesQueryResult {
                     rvPurchaseList?.adapter = ProductPurchasedAdapter(it) { pos, data ->
                         // on purchase item click, consume the inapp purchase
@@ -50,7 +52,7 @@ class ProductPurchasedFragment : Fragment() {
 
     private fun consumePurchase(purchase: AugmentedPurchase){
         BillingRepo.getInstance(activity?.application!!)
-            .items(BillingRepo.PurchaseCategory.IS_CONSUMABLE.name, CONSUMABLE_SKUS)
+            .items(ProductCategory.IS_CONSUMABLE.name, CONSUMABLE_SKUS)
             .consumePurchase(purchase){ responseCode, purchaseToken ->
                 when(responseCode){
                     BillingResponse.OK ->{
