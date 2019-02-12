@@ -350,6 +350,7 @@ class BillingRepo private constructor(private val application: Application) :
      */
     override fun onSkuDetailsResponse(responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) {
         Log.d(javaClass.name, "Sku Details Response")
+        Log.d(javaClass.name, queryCount.toString())
         when(billingOk){
             BillingOK.QUERY_BOTH->{
                 queryCount++

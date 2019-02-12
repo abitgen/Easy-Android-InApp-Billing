@@ -17,6 +17,7 @@ import kotlinx.android.synthetic.main.product_list_fragment.*
 import my.android.inappbilling.*
 import my.android.inappbilling.enums.BillingOK
 import my.android.inappbilling.enums.ProductCategory
+import my.android.inappbilling.utils.RxUtils
 
 class ProductListFragment : Fragment() {
 
@@ -66,6 +67,8 @@ class ProductListFragment : Fragment() {
         BillingRepo.getInstance(activity?.application!!).from(activity!!)
                 .launchBillingFlow(data) { resCode, purchaseList ->
                     when (resCode) {
+                        BillingResponse.OK -> Toast.makeText(requireContext(), "Purchase Success", Toast.LENGTH_SHORT).show()
+                        BillingResponse.USER_CANCELED -> Toast.makeText(requireContext(), "Purchase Cancelled", Toast.LENGTH_SHORT).show()
                         BillingResponse.ITEM_ALREADY_OWNED -> Toast.makeText(requireContext(), "You have already purchased the item", Toast.LENGTH_SHORT).show()
                     }
                     Log.d(javaClass.name, purchaseList.toString())

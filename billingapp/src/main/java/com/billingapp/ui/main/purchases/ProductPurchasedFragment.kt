@@ -61,7 +61,7 @@ class ProductPurchasedFragment : Fragment() {
                     }
                     else -> {
                         Log.d(javaClass.name, "Product was NOT consumed/ Already Consumed $responseCode")
-                        Toast.makeText(requireContext(),"Product couldn't be consumed. May be this is a one time product or already consumed", LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(),"Product couldn't be consumed. May be this is a one time product / Subscription or already consumed", LENGTH_SHORT).show()
                     }
                 }
             }
