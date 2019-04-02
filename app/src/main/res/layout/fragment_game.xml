@@ -16,8 +16,7 @@
     limitations under the License.
     -->
 
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -32,15 +31,16 @@
         android:src="@drawable/title"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <View android:id="@+id/gold_status" android:layout_width="0dp"
-          android:layout_height="0dp"
-          app:layout_constraintBottom_toBottomOf="@id/free_or_premium_car"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:layout_constraintStart_toStartOf="parent"
-          app:layout_constraintTop_toTopOf="@id/free_or_premium_car"
-    />
+    <View
+        android:id="@+id/gold_status"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="@id/free_or_premium_car"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/free_or_premium_car" />
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/free_or_premium_car"
@@ -51,8 +51,8 @@
         android:src="@drawable/free_car"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/title"
-    />
+        app:layout_constraintTop_toBottomOf="@id/title" />
+
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/gas_gauge"
         android:layout_width="wrap_content"
@@ -62,8 +62,7 @@
         android:src="@drawable/gas_level_0"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/free_or_premium_car"
-    />
+        app:layout_constraintTop_toBottomOf="@id/free_or_premium_car" />
 
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btn_drive"
@@ -74,7 +73,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/gas_gauge"
-        app:layout_constraintVertical_chainStyle="spread"/>
+        app:layout_constraintVertical_chainStyle="spread" />
+
     <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/btn_purchase"
         android:layout_width="wrap_content"
@@ -83,7 +83,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/btn_drive"
-    />
+        app:layout_constraintTop_toBottomOf="@id/btn_drive" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

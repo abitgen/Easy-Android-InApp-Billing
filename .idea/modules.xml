@@ -2,8 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Easy-Android-InApp-Billing.iml" filepath="$PROJECT_DIR$/.idea/Easy-Android-InApp-Billing.iml" />
-      <module fileurl="file://$PROJECT_DIR$/TrivialDriveKotlin.iml" filepath="$PROJECT_DIR$/TrivialDriveKotlin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Easy-Android-InApp-Billing.iml" filepath="$PROJECT_DIR$/Easy-Android-InApp-Billing.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/billingapp/billingapp.iml" filepath="$PROJECT_DIR$/billingapp/billingapp.iml" />
       <module fileurl="file://$PROJECT_DIR$/play_billing/play_billing.iml" filepath="$PROJECT_DIR$/play_billing/play_billing.iml" />

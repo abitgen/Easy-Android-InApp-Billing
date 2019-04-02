@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.billingapp.db
+package com.billingapp.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

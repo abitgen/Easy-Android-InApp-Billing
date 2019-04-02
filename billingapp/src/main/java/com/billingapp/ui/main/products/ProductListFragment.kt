@@ -6,18 +6,19 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import android.widget.Toast.LENGTH_SHORT
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import com.billingapp.MainActivity
 import com.billingapp.R
-import com.billingapp.model.INAPP_SKUS
-import com.billingapp.model.SUBS_SKUS
+import com.billingapp.config.INAPP_SKUS
+import com.billingapp.config.PUBLIC_BASE_64_KEY
+import com.billingapp.config.SUBS_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.product_list_fragment.*
 import my.android.inappbilling.*
 import my.android.inappbilling.enums.BillingOK
 import my.android.inappbilling.enums.ProductCategory
-import my.android.inappbilling.utils.RxUtils
 
 class ProductListFragment : Fragment() {
 
@@ -65,11 +66,13 @@ class ProductListFragment : Fragment() {
 
     private fun handleOnClick(pos: Int, data: AugmentedSkuDetails) {
         BillingRepo.getInstance(activity?.application!!).from(activity!!)
+                .verifyWith(PUBLIC_BASE_64_KEY, true)
                 .launchBillingFlow(data) { resCode, purchaseList ->
                     when (resCode) {
                         BillingResponse.OK -> Toast.makeText(requireContext(), "Purchase Success", Toast.LENGTH_SHORT).show()
                         BillingResponse.USER_CANCELED -> Toast.makeText(requireContext(), "Purchase Cancelled", Toast.LENGTH_SHORT).show()
                         BillingResponse.ITEM_ALREADY_OWNED -> Toast.makeText(requireContext(), "You have already purchased the item", Toast.LENGTH_SHORT).show()
+                        BillingResponse.ERROR -> Toast.makeText(requireContext(), "Unable to verify the purchase", LENGTH_SHORT).show()
                     }
                     Log.d(javaClass.name, purchaseList.toString())
                 }

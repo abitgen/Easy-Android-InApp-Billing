@@ -10,4 +10,5 @@ interface BillingPurchaseProvider {
 
     fun launchBillingFlow(skuDetails: AugmentedSkuDetails, result:(responseCode: BillingResponse, purchaseList: MutableList<AugmentedPurchase>?) -> Unit) : BillingPurchaseProvider
     fun consumePurchase(augmentedPurchase: AugmentedPurchase, listener: (responseCode: BillingResponse, purchaseToken: String?) -> Unit): BillingPurchaseProvider
+    fun verifyWith(key: String, shouldVerify: Boolean): BillingPurchaseProvider
 }

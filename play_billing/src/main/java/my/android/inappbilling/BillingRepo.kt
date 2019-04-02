@@ -3,6 +3,7 @@ package my.android.inappbilling
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Application
+import android.content.ContentValues.TAG
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.android.billingclient.api.*
@@ -10,7 +11,9 @@ import com.android.billingclient.api.BillingClient.BillingResponse.BILLING_UNAVA
 import com.android.billingclient.api.BillingClient.BillingResponse.ERROR
 import my.android.inappbilling.enums.BillingOK
 import my.android.inappbilling.enums.ProductCategory
+import my.android.inappbilling.security.Security
 import my.android.inappbilling.utils.RxUtils
+import java.io.IOException
 import java.util.*
 
 class BillingRepo private constructor(private val application: Application) :
@@ -44,8 +47,9 @@ class BillingRepo private constructor(private val application: Application) :
     private lateinit var skuDetailsResponseListener: (responseCode: BillingResponse, skuDetailsList: MutableList<AugmentedSkuDetails>?) -> Unit
     private lateinit var purchaseUpdateListener: (responseCode: BillingResponse, purchases: MutableList<AugmentedPurchase>?) -> Unit
     private lateinit var purchaseConsumedListener: (responseCode: BillingResponse, purchaseToken: String?) -> Unit
-    private var queryCount:Int = 0
-    private var skuDetailsGroupList:MutableList<AugmentedSkuDetails> = mutableListOf()
+    private var verifyCallback: (() -> String)? = null
+    private var queryCount: Int = 0
+    private var skuDetailsGroupList: MutableList<AugmentedSkuDetails> = mutableListOf()
 
     fun from(activity: Activity): BillingRepo {
         this.activity = activity
@@ -107,6 +111,15 @@ class BillingRepo private constructor(private val application: Application) :
 
     override fun onPurchaseUpdated(result: (responseCode: BillingResponse, purchaseList: MutableList<AugmentedPurchase>?) -> Unit): BillingPurchaseProvider {
         purchaseUpdateListener = result
+        return this
+    }
+
+    override fun verifyWith(key: String, shouldVerify: Boolean): BillingPurchaseProvider {
+        if (shouldVerify) {
+            verifyCallback = { key }
+        } else {
+            verifyCallback = null
+        }
         return this
     }
 
@@ -174,7 +187,15 @@ class BillingRepo private constructor(private val application: Application) :
      * [queryPurchasesSync].
      */
     override fun onPurchasesUpdated(responseCode: Int, purchases: MutableList<Purchase>?) {
-        purchaseUpdateListener(getResponseCode(responseCode), purchases?.map { AugmentedPurchase(it) }?.toMutableList())
+        val purchases = purchases?.map {
+                AugmentedPurchase(it, if(verifyCallback != null) verifyValidSignature(it.originalJson, it.signature) else true)
+            }
+        val notVerifiedPurchases = purchases?.filter { !it.signatureVerified }
+        if(notVerifiedPurchases?.count()?: 0 > 0){
+            purchaseUpdateListener(BillingResponse.ERROR, notVerifiedPurchases?.toMutableList())
+        }else {
+            purchaseUpdateListener(getResponseCode(responseCode), purchases?.toMutableList())
+        }
     }
 
     override fun onBillingServiceDisconnected() {
@@ -351,16 +372,17 @@ class BillingRepo private constructor(private val application: Application) :
     override fun onSkuDetailsResponse(responseCode: Int, skuDetailsList: MutableList<SkuDetails>?) {
         Log.d(javaClass.name, "Sku Details Response")
         Log.d(javaClass.name, queryCount.toString())
-        when(billingOk){
-            BillingOK.QUERY_BOTH->{
+        when (billingOk) {
+            BillingOK.QUERY_BOTH -> {
                 queryCount++
-                skuDetailsGroupList.addAll(skuDetailsList?.map { AugmentedSkuDetails(it) }?.toList()?: mutableListOf())
-                if(queryCount==skuItemsMap.size){
+                skuDetailsGroupList.addAll(skuDetailsList?.map { AugmentedSkuDetails(it) }?.toList()
+                        ?: mutableListOf())
+                if (queryCount == skuItemsMap.size) {
                     skuDetailsResponseListener(getResponseCode(responseCode), skuDetailsGroupList.toMutableList())
                     resetskuDetailsGroupList()
                 }
             }
-            else->{
+            else -> {
                 skuDetailsResponseListener(getResponseCode(responseCode), skuDetailsList?.map { AugmentedSkuDetails(it) }?.toMutableList())
             }
         }
@@ -405,9 +427,28 @@ class BillingRepo private constructor(private val application: Application) :
         return responseCode == BillingClient.BillingResponse.OK
     }
 
-    private fun resetskuDetailsGroupList(){
+    private fun resetskuDetailsGroupList() {
         skuDetailsGroupList.clear()
-        queryCount=0
+        queryCount = 0
+    }
+
+    /**
+     * Verifies that the purchase was signed correctly for this developer's public key.
+     *
+     * Note: It's strongly recommended to perform such check on your backend since hackers can
+     * replace this method with "constant true" if they decompile/rebuild your app.
+     *
+     */
+    private fun verifyValidSignature(signedData: String, signature: String): Boolean {
+        if (verifyCallback != null) {
+            return try {
+                Security.verifyPurchase(verifyCallback?.invoke()!!, signedData, signature)
+            } catch (e: IOException) {
+                Log.e(TAG, "Got an exception trying to validate a purchase: $e")
+                false
+            }
+        }
+        return true
     }
 
     companion object {
@@ -415,6 +456,7 @@ class BillingRepo private constructor(private val application: Application) :
         @Volatile
         private var INSTANCE: BillingRepo? = null
 
+        @JvmStatic
         fun getInstance(application: Application): BillingRepo =
                 INSTANCE ?: synchronized(this) {
                     INSTANCE ?: BillingRepo(application).also { INSTANCE = it }

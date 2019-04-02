@@ -11,7 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProviders
 import com.billingapp.R
 import com.billingapp.ui.main.AugmentedPurchases.ProductPurchasedAdapter
-import com.billingapp.model.CONSUMABLE_SKUS
+import com.billingapp.config.CONSUMABLE_SKUS
 import com.billingapp.ui.main.MainViewModel
 import kotlinx.android.synthetic.main.purchase_list_fragment.*
 import my.android.inappbilling.AugmentedPurchase

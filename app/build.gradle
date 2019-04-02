@@ -25,8 +25,8 @@ android {
         applicationId APP_ID
         minSdkVersion 14
         targetSdkVersion 28
-        versionCode 5
-        versionName "0.05"
+        versionCode 4
+        versionName "4.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions.annotationProcessorOptions.includeCompileClasspath = true
 
