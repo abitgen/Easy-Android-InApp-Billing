@@ -64,6 +64,8 @@ class ProductListFragment : Fragment() {
         }
     }
 
+    // PUBLIC_BASE_64_KEY is the key for verifying purchase signature,
+    // get this from  Play console, Choose your app then in navigation drawer goto Development Tools -> Services & APIs
     private fun handleOnClick(pos: Int, data: AugmentedSkuDetails) {
         BillingRepo.getInstance(activity?.application!!).from(activity!!)
                 .verifyWith(PUBLIC_BASE_64_KEY, true)
